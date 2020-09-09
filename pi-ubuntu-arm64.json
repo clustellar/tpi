@@ -1,0 +1,92 @@
+{
+	"variables": {
+		"datacenter": "dc1",
+		"consul_key": ""
+	},
+	"builders": [
+		{
+			"type": "arm",
+			"file_urls" : ["http://cdimage.ubuntu.com/releases/20.04.1/release/ubuntu-20.04.1-preinstalled-server-arm64+raspi.img.xz"],
+			"file_checksum_url": "http://cdimage.ubuntu.com/releases/20.04.1/release/SHA256SUMS",
+			"file_checksum_type": "sha256",
+			"file_target_extension": "xz",
+			"file_unarchive_cmd": ["xz", "-d", "$ARCHIVE_PATH"],
+			"image_build_method": "reuse",
+			"image_path": "ubuntu-20.04.img",
+			"image_size": "3.1G",
+			"image_type": "dos",
+			"image_partitions": [
+				{
+					"name": "boot",
+					"type": "c",
+					"start_sector": "2048",
+					"filesystem": "fat",
+					"size": "256M",
+					"mountpoint": "/boot/firmware"
+				},
+				{
+					"name": "root",
+					"type": "83",
+					"start_sector": "526336",
+					"filesystem": "ext4",
+					"size": "2.8G",
+					"mountpoint": "/"
+				}
+    	],
+			"image_chroot_env": ["PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"],
+			"qemu_binary_source_path": "/usr/bin/qemu-aarch64-static",
+			"qemu_binary_destination_path": "/usr/bin/qemu-aarch64-static"
+		}
+	],
+	"provisioners": [
+		{
+			 "type": "shell",
+			 "inline": [
+				 "touch /boot/ssh",
+				 "rm -f /etc/resolv.conf",
+         "echo 'nameserver 8.8.8.8' > /etc/resolv.conf",
+         "echo \"127.0.1.1 $HOSTNAME\" >> /etc/hosts",
+         "echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections",
+				 "export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1",
+				 "curl -sSL https://get.docker.com | sh"
+		 ]
+		},
+		{
+			"type": "file",
+			"source": "./bin/nomad",
+			"destination": "/usr/local/bin/"
+		},
+		{
+			"type": "file",
+			"source": "./bin/consul",
+			"destination": "/usr/local/bin/"
+		},
+		{
+			"type": "file",
+			"source": "./bin/vault",
+			"destination": "/usr/local/bin/"
+		},
+		{
+			"type": "shell",
+			"inline": [
+				"chmod +x /usr/local/bin/*"
+			]
+		},
+		{
+			"type": "file",
+			"source": "./deploy/deploy-vault.sh",
+			"destination": "/usr/local/bin/deploy-vault.sh"
+		},
+		{
+			"type": "file",
+			"source": "./deploy/deploy-consul.sh",
+			"destination": "/usr/local/bin/deploy-consul.sh"
+		},
+		{
+
+			"type": "file",
+			"source": "./deploy/deploy-nomad.sh",
+			"destination": "/usr/local/bin/deploy-nomad.sh"
+		}
+	]
+}
