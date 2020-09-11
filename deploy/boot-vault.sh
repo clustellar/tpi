@@ -112,7 +112,7 @@ _setup_pki_roles() {
 	local allowed="$3"
 	local maxttl="$4"
 
-	vault write $pki/roles/$role allowed_domains=$allowed allow_glob_domains=true allow_subdomains=true max_ttl=$maxttl
+	vault write $pki/roles/$role allowed_domains=$allowed allow_bare_domains=true allow_glob_domains=true allow_subdomains=true max_ttl=$maxttl
 }
 
 _issue_pki_certificate() {
@@ -125,29 +125,91 @@ _issue_pki_certificate() {
 	vault write -format=yaml $pki/issue/$role common_name="$cn" ttl="$maxttl" > $pki-$cn.yaml
 }
 
+INFILE=/var/lib/vault/init-data
+ROOT_PKI=root
+ROOT_CN=vault.root
+ROOT_TTL=87600h
+INT_PKI=pki
+INT_CN=vault.local
+INT_TTL=43800h
+INT_DOMAINS="*.local"
+INT_ROLE=local-issuer
+CERT_TTL=21900h
+CERTS=""
+OPTIND=1
+
 _main() {
-	local infile="/var/lib/vault/init-data"
-	local root_pki=root
-	local root_cn=root.local
-	local root_ttl=87600h
-	local int_pki=pki
-	local int_cn=vault.local
-	local int_ttl=43800h
-	local int_role=local-issuer
-	local int_domains=*.local
-	local cert_ttl=21900h
+	_vault_init $INFILE
+	_unseal $INFILE
+	_load_vault_token $INFILE
 
-	_vault_init $infile
-	_unseal $infile
-	_load_vault_token $infile
+	_setup_root_pki $ROOT_PKI $ROOT_CN $ROOT_TTL
+	_setup_pki $INT_PKI $INT_CN $ROOT_PKI $INT_TTL
+	_setup_pki_roles $INT_PKI $INT_ROLE $INT_DOMAINS $INT_TTL
 
-	_setup_root_pki $root_pki $root_cn $root_ttl
-	_setup_pki $int_pki $int_cn $root_pki $int_ttl
-
-	_setup_pki_roles $int_pki $int_role $int_domains $int_ttl
-
-	_issue_pki_certificate $int_pki test.local $int_role $cert_ttl
+	for cert in $(echo $CERTS | tr "," "\n"); do
+		echo "Certificate: $cert"
+		_issue_pki_certificate $INT_PKI $cert $INT_ROLE $CERT_TTL
+	done
 }
 
+for i in "$@"; do
+	case $i in
+		--root-pki)
+			ROOT_PKI="$2"
+			shift
+			shift
+			;;
+		--root-cn)
+			ROOT_CN="$2"
+			shift
+			shift
+			;;
+		--root-ttl)
+			ROOT_TTL="$2"
+			shift
+			shift
+			;;
+		--init-data-file)
+			INFILE="$2"
+			shift
+			shift
+			;;
+		--int-pki)
+			INT_PKI="$2"
+			shift
+			shift
+			;;
+		--int-cn)
+			INT_CN="$2"
+			shift
+			shift
+			;;
+		--int-ttl)
+			INT_TTL="$2"
+			shift
+			shift
+			;;
+		--int-role)
+			INT_ROLE="$2"
+			shift
+			shift
+			;;
+		--allowed-domains)
+			INT_DOMAINS="$2"
+			shift
+			shift
+			;;
+		--cert)
+			CERTS="$2"
+			shift
+			shift
+			;;
+		*)
+			_warn "Unknown argument: $opt, skipping"
+			shift
+			;;
+	esac
+done
+
 _main
-exit 0
