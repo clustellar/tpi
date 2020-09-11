@@ -11,6 +11,7 @@ consul_service_file="$consul_service_dir/consul.service"
 consul_config_file="$consul_config_dir/consul.hcl"
 consul_data_dir="/var/lib/consul"
 consul_encrypt_key=""
+consul_ui="true"
 
 if [ ! -z "$CONSUL_DISABLE" ]; then
 	echo "[WARN] consul has been disabled, exiting."
@@ -29,16 +30,6 @@ fi
 
 if [ ! -x "$consul_bin" ]; then
 	chmod +x $consul_bin
-fi
-
-if [ ! -f "$consul_sys" ]; then
-	echo "[ERROR] consul systemd service file ($consul_sys) does not exist, exiting."
-	exit 1
-fi
-
-if [ ! -f "$consul_cfg" ]; then
-	echo "[ERROR] consul config file ($consul_cfg) does not exist, exiting."
-	exit 1
 fi
 
 _main() {
@@ -74,7 +65,7 @@ _generate_consul_config_file() {
 	cat <<EOF
 server = true
 bootstrap_expect = 3
-ui = true
+ui = $consul_ui
 client_addr = "0.0.0.0"
 datacenter = "$DATACENTER"
 data_dir = "$consul_data_dir"

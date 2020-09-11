@@ -9,6 +9,7 @@ nomad_config_dir="/etc/nomad.d"
 nomad_service_file="$nomad_service_dir/nomad.service"
 nomad_config_file="$nomad_config_dir/nomad.hcl"
 nomad_data_dir="/var/lib/nomad"
+nomad_ui="true"
 
 if [ ! -z "$NOMAD_DISABLE" ]; then
 	echo "[WARN] nomad has been disabled, exiting."
@@ -22,16 +23,6 @@ fi
 
 if [ ! -x "$nomad_bin" ]; then
 	chmod +x $nomad_bin
-fi
-
-if [ ! -f "$nomad_sys" ]; then
-	echo "[ERROR] nomad systemd service file ($nomad_sys) does not exist, exiting."
-	exit 1
-fi
-
-if [ ! -f "$nomad_cfg" ]; then
-	echo "[ERROR] nomad config file ($nomad_cfg) does not exist, exiting."
-	exit 1
 fi
 
 _main() {
@@ -63,6 +54,7 @@ _generate_nomad_config_file() {
 datacenter = "${DATACENTER}"
 data_dir = "$nomad_data_dir"
 raft_protocol = 3
+ui = $nomad_ui
 server {
   enabled = true
   bootstrap_expect = 3

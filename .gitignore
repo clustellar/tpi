@@ -1,3 +1,5 @@
+data/
 packer_cache/
 output-arm-image/
 *.img
+id_rsa.pub

@@ -45,11 +45,25 @@
 				 "touch /boot/ssh",
 				 "rm -f /etc/resolv.conf",
          "echo 'nameserver 8.8.8.8' > /etc/resolv.conf",
-         "echo \"127.0.1.1 $HOSTNAME\" >> /etc/hosts",
+         "echo \"127.0.1.1 $HOSTNAME ubuntu\" >> /etc/hosts",
          "echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections",
 				 "export APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1",
 				 "curl -sSL https://get.docker.com | sh"
 		 ]
+		},
+		{
+			"type": "shell",
+			"inline": [
+				"sudo useradd -s /bin/bash -d /home/ubuntu -m -G docker ubuntu",
+				"sudo mkdir -p /home/ubuntu/.ssh",
+				"sudo touch /home/ubuntu/.ssh/authorized_keys",
+				"sudo chown -R ubuntu:ubuntu /home/ubuntu/.ssh"
+			]
+		},
+		{
+			"type": "file",
+			"source": "./id_rsa.pub",
+			"destination": "/home/ubuntu/.ssh/authorized_keys"
 		},
 		{
 			"type": "file",
@@ -67,10 +81,9 @@
 			"destination": "/usr/local/bin/"
 		},
 		{
-			"type": "shell",
-			"inline": [
-				"chmod +x /usr/local/bin/*"
-			]
+			"type": "file",
+			"source": "./deploy/deploy-vault-agent.sh",
+			"destination": "/usr/local/bin/deploy-vault-agent.sh"
 		},
 		{
 			"type": "file",
@@ -83,10 +96,15 @@
 			"destination": "/usr/local/bin/deploy-consul.sh"
 		},
 		{
-
 			"type": "file",
 			"source": "./deploy/deploy-nomad.sh",
 			"destination": "/usr/local/bin/deploy-nomad.sh"
+		},
+		{
+			"type": "shell",
+			"inline": [
+				"chmod +x /usr/local/bin/*"
+			]
 		}
 	]
 }

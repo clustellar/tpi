@@ -25,16 +25,6 @@ if [ ! -x "$vault_bin" ]; then
 	chmod +x $vault_bin
 fi
 
-if [ ! -f "$vault_sys" ]; then
-	echo "[ERROR] vault systemd service file ($vault_sys) does not exist, exiting."
-	exit 1
-fi
-
-if [ ! -f "$vault_cfg" ]; then
-	echo "[ERROR] vault config file ($vault_cfg) does not exist, exiting."
-	exit 1
-fi
-
 _main() {
 	vault --version
 	vault -autocomplete-install
@@ -87,7 +77,7 @@ _bootstrap_vault() {
 _generate_vault_local_config_file() {
 	cat <<EOF
 listener "tcp" {
-  address       = "0.0.0.0:8200"
+  address       = "127.0.0.1:8200"
 }
 storage "file" {
 	path = "$vault_data_dir"
