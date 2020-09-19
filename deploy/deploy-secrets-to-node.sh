@@ -2,10 +2,11 @@
 source ./vault-common.sh
 
 if [ #$ -ne 1 ]; then
-	_error "Invalid args: must supply a node name (hostname)"
+	_error "Invalid args: must supply a scp destination like user@host:/home/user/path/token/to/put"
 fi
 
-NODE="$1" # like rpi1
+SCP="$1" # i.e user@host:/path/to/token
+NODE="$(echo $SCP | cut -d @ -f2 | cut -d : -f1)"
 shift
 
 _main() {
@@ -25,7 +26,7 @@ EOF
 	vault token create -format=yaml -policy="$NODE-role" -policy="$NODE-policy" > $NODE-token.yaml
 	cat $NODE-token.yaml
 
-#	scp $NODE-token.yaml $NODE:~/.ssh/vault-token.yaml
+	scp $NODE-token.yaml $SCP
 }
 
 _main
