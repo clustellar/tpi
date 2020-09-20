@@ -55,6 +55,9 @@ for i in "$@"; do
 		--cert)
 			CERTS="$val"
 			;;
+		--data-dir)
+			DATADIR="$val"
+			;;
 		*)
 			_warn "Unknown argument: $i, skipping"
 			;;

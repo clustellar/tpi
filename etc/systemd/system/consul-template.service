@@ -1,0 +1,18 @@
+[Unit]
+Description="HashiCorp Consul Template - rendering dynamic config files"
+Documentation=https://www.consul.io/
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty=/etc/consul-template.d/consul-template.hcl
+
+[Service]
+Type=notify
+User=consul
+Group=consul
+ExecStart=/usr/local/bin/consul-template -config=/etc/consul-template.d
+KillMode=process
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -1,6 +1,7 @@
 #!/bin/sh
 
 DOMAIN=local
+DATADIR=/data
 INFILE=/var/lib/vault/init-data
 ROOT_PKI=root
 ROOT_CN=root.vault
@@ -88,7 +89,7 @@ _setup_root_pki() {
 
 	vault secrets enable -path=$pki pki
 	vault secrets tune -max-lease-ttl=$maxttl $pki
-	vault write -field=certificate $pki/root/generate/internal common_name="$cn" ttl=$maxttl > $pki-ca.crt
+	vault write -field=certificate $pki/root/generate/internal common_name="$cn" ttl=$maxttl > $DATADIR/$pki-ca.crt
 	vault write $pki/config/urls issuing_certificates="$VAULT_ADDR/v1/$pki/ca" crl_distribution_points="$VAULT_ADDR/v1/$pki/crl"
 }
 
@@ -108,13 +109,13 @@ _setup_pki() {
 	vault secrets enable -path=$pki pki
 	vault secrets tune -max-lease-ttl=$maxttl $pki
 
-	vault write -format=yaml $pki/intermediate/generate/internal common_name="$cn Intermediate Authority" > $csryaml
-	cat $csryaml | sed -n '/-----BEGIN/,/-----END/p' | awk '{$1=$1;print}' > $csrpem
+	vault write -format=yaml $pki/intermediate/generate/internal common_name="$cn Intermediate Authority" > $DATADIR/$csryaml
+	cat $DATADIR/$csryaml | sed -n '/-----BEGIN/,/-----END/p' | awk '{$1=$1;print}' > $DATADIR/$csrpem
 
-	vault write -format=yaml $rootpki/root/sign-intermediate csr=@$csrpem format=pem_bundle ttl="$maxttl" > $signedyaml
-	cat $signedyaml | sed -n '/-----BEGIN/,/-----END/p' | awk '{$1=$1;print}' > $signedpem
+	vault write -format=yaml $rootpki/root/sign-intermediate csr=@$DATADIR/$csrpem format=pem_bundle ttl="$maxttl" > $DATADIR/$signedyaml
+	cat $DATADIR/$signedyaml | sed -n '/-----BEGIN/,/-----END/p' | awk '{$1=$1;print}' > $DATADIR/$signedpem
 
-	vault write $pki/intermediate/set-signed certificate=@$signedpem
+	vault write $pki/intermediate/set-signed certificate=@$DATADIR/$signedpem
 }
 
 _setup_pki_roles() {
@@ -134,62 +135,6 @@ _issue_pki_certificate() {
 	local role="$3"
 	local maxttl="$4"
 
-	vault write -format=yaml $pki/issue/$role common_name="$cn" ttl="$maxttl" > $pki-$cn.yaml
+	vault write -format=yaml $pki/issue/$role common_name="$cn" ttl="$maxttl" > $DATADIR/$pki-$cn.yaml
 }
 
-_main() {
-	_vault_init $INFILE
-	_unseal $INFILE
-	_load_vault_token $INFILE
-
-	_setup_root_pki $ROOT_PKI $ROOT_CN $ROOT_TTL
-	_setup_pki $INT_PKI $INT_CN $ROOT_PKI $INT_TTL
-	_setup_pki_roles $INT_PKI $INT_ROLE $INT_DOMAINS $INT_TTL
-
-	for cert in $(echo $CERTS | tr "," "\n"); do
-		echo "Certificate: $cert"
-		_issue_pki_certificate $INT_PKI $cert $INT_ROLE $CERT_TTL
-	done
-}
-
-for i in "$@"; do
-	key="$(echo $i | cut -d '=' -f1)"
-	val="$(echo $i | cut -d '=' -f2-)"
-	case $key in
-		--root-pki)
-			ROOT_PKI="$val"
-			;;
-		--root-cn)
-			ROOT_CN="$val"
-			;;
-		--root-ttl)
-			ROOT_TTL="$val"
-			;;
-		--init-data-file)
-			INFILE="$val"
-			;;
-		--int-pki)
-			INT_PKI="$val"
-			;;
-		--int-cn)
-			INT_CN="$val"
-			;;
-		--int-ttl)
-			INT_TTL="$val"
-			;;
-		--int-role)
-			INT_ROLE="$val"
-			;;
-		--allowed-domains)
-			INT_DOMAINS="$val"
-			;;
-		--cert)
-			CERTS="$val"
-			;;
-		*)
-			_warn "Unknown argument: $i, skipping"
-			;;
-	esac
-done
-
-_main

@@ -77,6 +77,11 @@
 		},
 		{
 			"type": "file",
+			"source": "./bin/consul-template",
+			"destination": "/usr/local/bin/"
+		},
+		{
+			"type": "file",
 			"source": "./bin/vault",
 			"destination": "/usr/local/bin/"
 		},
@@ -94,6 +99,11 @@
 			"type": "file",
 			"source": "./deploy/deploy-consul.sh",
 			"destination": "/usr/local/bin/deploy-consul.sh"
+		},
+		{
+			"type": "file",
+			"source": "./deploy/deploy-consul-template.sh",
+			"destination": "/usr/local/bin/deploy-consul-template.sh"
 		},
 		{
 			"type": "file",

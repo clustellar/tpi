@@ -8,11 +8,15 @@ image:
 
 vault: ./etc/vault.d/root.hcl
 	if docker ps -a | grep root-vault ; then docker rm -vf root-vault ; fi
-	docker run -d -p 8200:8200 -e VAULT_ADDR=http://127.0.0.1:8200 --name root-vault --cap-add IPC_LOCK -v ${PWD}/deploy/boot-vault.sh:/boot-vault.sh -v ${PWD}/data/vault:/var/lib/vault:rw -v ${PWD}/etc/vault.d/root.hcl:/etc/vault.hcl vault:latest vault server -config /etc/vault.hcl
+	docker run -d -p 8200:8200 -e VAULT_ADDR=http://127.0.0.1:8200 --name root-vault --cap-add IPC_LOCK -v ${PWD}/deploy:/scripts:rw -v ${PWD}/data/certs:/data:rw -v ${PWD}/data/vault:/var/lib/vault:rw -v ${PWD}/etc/vault.d/root.hcl:/etc/vault.hcl vault:latest vault server -config /etc/vault.hcl
 
 reset: ./data/vault
 	if docker ps -a | grep root-vault ; then docker rm -vf root-vault ; fi
 	sudo rm -rf ./data/vault/*
+	sudo rm -rf ./data/certs/*
+
+exec:
+	docker exec -it root-vault sh
 
 pubkey:
 	cp ~/.ssh/id_rsa.pub id_rsa.pub

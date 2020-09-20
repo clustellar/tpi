@@ -1,7 +1,7 @@
 #!/bin/sh
 source ./vault-common.sh
 
-if [ #$ -ne 1 ]; then
+if [ "$#" -ne 1 ]; then
 	_error "Invalid args: must supply a scp destination like user@host:/home/user/path/token/to/put"
 fi
 
@@ -10,23 +10,25 @@ NODE="$(echo $SCP | cut -d @ -f2 | cut -d : -f1)"
 shift
 
 _main() {
-	vault write $PKI/roles/$NODE-role allowed_domains="$NODE.$DOMAIN" allow_subdomains=true max_ttl="$INT_TTL"
+        _load_vault_token $INFILE
+	vault write $INT_PKI/roles/$NODE-role allowed_domains="$NODE.$DOMAIN" allow_subdomains=true max_ttl="$INT_TTL"
 
-	cat <<EOF > ./$NODE-policy.hcl
-path "$PKI/issue/$NODE-role" {
+	cat <<EOF > $DATADIR/$NODE-policy.hcl
+path "$INT_PKI/issue/$NODE-role" {
 	capabilities = ["read", "create", "update"]
 }
 
 path "auth/token/create" {
-	capabilties = ["update"]
+	capabilities = ["update"]
 }
 EOF
 
-	vault policy write $NODE-policy ./$NODE-policy.hcl
-	vault token create -format=yaml -policy="$NODE-role" -policy="$NODE-policy" > $NODE-token.yaml
-	cat $NODE-token.yaml
+	vault policy write $NODE-policy $DATADIR/$NODE-policy.hcl
+        vault policy list
+	vault token create -format=yaml -policy="$INT_PKI/roles/$NODE-role" -policy="$NODE-policy" > $DATADIR/$NODE-token.yaml
+	cat $DATADIR/$NODE-token.yaml
 
-	scp $NODE-token.yaml $SCP
+	scp $DATADIR/$NODE-token.yaml $SCP
 }
 
 _main
