@@ -56,6 +56,7 @@
 			"inline": [
 				"sudo useradd -s /bin/bash -d /home/ubuntu -m -G docker ubuntu",
 				"sudo mkdir -p /home/ubuntu/.ssh",
+				"sudo mkdir -p /home/ubuntu/.vault",
 				"sudo touch /home/ubuntu/.ssh/authorized_keys",
 				"sudo chown -R ubuntu:ubuntu /home/ubuntu/.ssh"
 			]
@@ -113,8 +114,33 @@
 		{
 			"type": "shell",
 			"inline": [
-				"chmod +x /usr/local/bin/*"
+				"chmod 755 /usr/local/bin/*"
 			]
+		},
+		{
+			"type": "shell",
+			"inline": [
+				"mkdir -p /opt/nomad/templates",
+				"mkdir -p /opt/vault/templates",
+				"mkdir -p /opt/consul/templates",
+				"mkdir -p /opt/nomad/certs",
+				"mkdir -p /opt/vault/certs",
+				"mkdir -p /opt/consul/certs",
+				"sudo chown -R ubuntu:ubuntu /opt/nomad",
+				"sudo chown -R ubuntu:ubuntu /opt/vault",
+				"sudo chown -R ubuntu:ubuntu /opt/consul"
+			]
+		},
+		{
+			"type": "file",
+			"source": "./opt/nomad/templates/",
+			"destination": "/opt/nomad/templates/"
+		},
+		{
+			"type": "file",
+			"source": "./opt/nomad/templates/",
+			"destination": "/opt/nomad/templates/"
 		}
+
 	]
 }

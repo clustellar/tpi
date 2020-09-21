@@ -12,6 +12,7 @@ consul_config_file="$consul_config_dir/consul.hcl"
 consul_data_dir="/var/lib/consul"
 consul_encrypt_key=""
 consul_ui="true"
+cert_dir="/opt/consul/certs"
 
 if [ ! -z "$CONSUL_DISABLE" ]; then
 	echo "[WARN] consul has been disabled, exiting."
@@ -46,8 +47,8 @@ _main() {
 	sudo chown --recursive $consul_user:$consul_user $consul_data_dir
 	sudo chmod 640 $consul_config_file
 
-	_generate_consul_config_file > $consul_config_file
-	_generate_consul_service_file > $consul_service_file
+	_generate_consul_config_file | sudo tee $consul_config_file
+	_generate_consul_service_file | sudo tee $consul_service_file
 
 	echo "starting consul"
 	consul validate $consul_config_file
@@ -70,9 +71,9 @@ client_addr = "0.0.0.0"
 datacenter = "$DATACENTER"
 data_dir = "$consul_data_dir"
 encrypt = "$consul_encrypt_key"
-#ca_file = "/etc/consul.d/consul-agent-ca.pem"
-#cert_file = "/etc/consul.d/dc1-server-consul-0.pem"
-#key_file = "/etc/consul.d/dc1-server-consul-0-key.pem"
+ca_file = "$cert_dir/ca.crt"
+cert_file = "$cert_dir/server.crt"
+key_file = "$cert_dir/server.key"
 verify_incoming = true
 verify_outgoing = true
 verify_server_hostname = true

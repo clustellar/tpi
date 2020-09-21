@@ -27,8 +27,6 @@ EOF
         vault policy list
 	vault token create -format=yaml -policy="$INT_PKI/roles/$NODE-role" -policy="$NODE-policy" > $DATADIR/$NODE-token.yaml
 	cat $DATADIR/$NODE-token.yaml
-
-	scp $DATADIR/$NODE-token.yaml $SCP
 }
 
 _main

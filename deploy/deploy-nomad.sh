@@ -10,6 +10,7 @@ nomad_service_file="$nomad_service_dir/nomad.service"
 nomad_config_file="$nomad_config_dir/nomad.hcl"
 nomad_data_dir="/var/lib/nomad"
 nomad_ui="true"
+cert_dir="/opt/nomad/certs"
 
 if [ ! -z "$NOMAD_DISABLE" ]; then
 	echo "[WARN] nomad has been disabled, exiting."
@@ -40,8 +41,8 @@ _main() {
 	sudo chown --recursive $nomad_user:$nomad_user $nomad_data_dir
 	sudo chmod 640 $nomad_config_file
 
-	_generate_nomad_config_file > $nomad_config_file
-	_generate_nomad_service_file > $nomad_service_file
+	_generate_nomad_config_file | sudo tee $nomad_config_file
+	_generate_nomad_service_file | sudo tee $nomad_service_file
 
 	echo "starting nomad"
 	sudo systemctl enable nomad
@@ -58,6 +59,14 @@ ui = $nomad_ui
 server {
   enabled = true
   bootstrap_expect = 3
+}
+tls {
+  http = true
+	rpc = true
+	ca_file = "$cert_dir/ca.crt"
+	cert_file = "$cert_dir/server.crt"
+	key_file = "$cert_dir/server.key"
+  verify_https_client = true
 }
 client {
   enabled = true

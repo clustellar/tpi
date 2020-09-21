@@ -10,6 +10,7 @@ vault_service_file="$vault_service_dir/vault.service"
 vault_config_file="$vault_config_dir/vault.hcl"
 vault_data_dir="/var/lib/vault"
 vault_ui="true"
+cert_dir="/opt/vault/certs"
 
 if [ ! -z "$VAULT_DISABLE" ]; then
 	echo "[WARN] vault has been disabled, exiting."
@@ -40,8 +41,8 @@ _main() {
 	sudo chown --recursive $vault_user:$vault_user $vault_data_dir
 	sudo chmod 640 $vault_config_file
 
-	_generate_vault_local_config_file > $vault_config_file
-	_generate_vault_service_file > $vault_service_file
+	_generate_vault_local_config_file | sudo tee $vault_config_file
+	_generate_vault_service_file | sudo tee $vault_service_file
 
 	echo "starting vault"
 	sudo systemctl enable vault
@@ -78,6 +79,11 @@ _generate_vault_local_config_file() {
 	cat <<EOF
 listener "tcp" {
   address       = "127.0.0.1:8200"
+	tls_cert_file = "$cert_dir/server.crt"
+	tls_key_file  = "$cert_dir/server.key"
+
+  tls_require_and_verify_client_cert = "true"
+	tls_client_ca_file = "$cert_dir/ca.crt"
 }
 storage "file" {
 	path = "$vault_data_dir"

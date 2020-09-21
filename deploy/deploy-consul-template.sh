@@ -25,6 +25,7 @@ fi
 
 _main() {
 	consul-template --version
+	sudo useradd --system --home $consul_config_dir --shell /bin/false $consul_user
 
 	echo "configuring consul template..."
 	sudo mkdir --parents $consul_config_dir
@@ -33,8 +34,8 @@ _main() {
 	sudo chown --recursive $consul_user:$consul_user $consul_data_dir
 	sudo chmod 640 $consul_config_file
 
-	_generate_consul_config_file > $consul_config_file
-	_generate_consul_service_file > $consul_service_file
+	_generate_consul_config_file | sudo tee $consul_config_file
+	_generate_consul_service_file | sudo tee $consul_service_file
 
 	echo "starting consul"
 	consul validate $consul_config_file
@@ -45,90 +46,117 @@ _main() {
 
 _generate_consul_config_file() {
 	cat <<EOF
-# This denotes the start of the configuration section for Vault. All values
-# contained in this section pertain to Vault.
 vault {
-  # This is the address of the Vault leader. The protocol (http(s)) portion
-  # of the address is required.
-  address      = "http://active.vault.service.consul:8200"
-
-  # This value can also be specified via the environment variable VAULT_TOKEN.
-  token        = "s.m069Vpul3c4lfGnJ6unpxgxD"
-
-  # This should also be less than or around 1/3 of your TTL for a predictable
-  # behaviour. Consult https://github.com/hashicorp/vault/issues/3414
+  address      = "$VAULT_SCHEME://$VAULD_ADDR:$VAULT_PORT"
+  token        = "$VAULT_TOKEN"
   grace        = "1s"
-
-  # This tells consul-template that the provided token is actually a wrapped
-  # token that should be unwrapped using Vault's cubbyhole response wrapping
-  # before being used. Consult Vault's cubbyhole response wrapping documentation
-  # for more information.
   unwrap_token = false
-
-  # This option tells consul-template to automatically renew the Vault token
-  # given. If you are unfamiliar with Vault's architecture, Vault requires
-  # tokens be renewed at some regular interval or they will be revoked. Consul
-  # Template will automatically renew the token at half the lease duration of
-  # the token. The default value is true, but this option can be disabled if
-  # you want to renew the Vault token using an out-of-band process.
   renew_token  = true
 }
 
-# This block defines the configuration for connecting to a syslog server for
-# logging.
-syslog {
-  enabled  = true
-
-  # This is the name of the syslog facility to log to.
-  facility = "LOCAL5"
-}
-
-# This block defines the configuration for a template. Unlike other blocks,
-# this block may be specified multiple times to configure multiple templates.
+# NOMAD Certs
 template {
-  # This is the source file on disk to use as the input template. This is often
-  # called the "consul-template template".
-  source      = "/opt/nomad/templates/agent.crt.tpl"
-
-  # This is the destination path on disk where the source template will render.
-  # If the parent directories do not exist, consul-template will attempt to
-  # create them, unless create_dest_dirs is false.
-  destination = "/opt/nomad/agent-certs/agent.crt"
-
-  # This is the permission to render the file. If this option is left
-  # unspecified, consul-template will attempt to match the permissions of the
-  # file that already exists at the destination path. If no file exists at that
-  # path, the permissions are 0644.
+  source      = "/opt/nomad/templates/server.crt.tpl"
+  destination = "/opt/nomad/certs/server.crt"
   perms       = 0700
-
-  # This is the optional command to run when the template is rendered. The
-  # command will only run if the resulting template changes.
   command     = "systemctl reload nomad"
 }
 
 template {
-  source      = "/opt/nomad/templates/agent.key.tpl"
-  destination = "/opt/nomad/agent-certs/agent.key"
+  source      = "/opt/nomad/templates/server.key.tpl"
+  destination = "/opt/nomad/certs/server.key"
+  perms       = 0700
+  command     = "systemctl reload nomad"
+}
+
+template {
+  source      = "/opt/nomad/templates/client.crt.tpl"
+  destination = "/opt/nomad/certs/client.crt"
+  perms       = 0700
+  command     = "systemctl reload nomad"
+}
+
+template {
+  source      = "/opt/nomad/templates/client.key.tpl"
+  destination = "/opt/nomad/certs/client.key"
   perms       = 0700
   command     = "systemctl reload nomad"
 }
 
 template {
   source      = "/opt/nomad/templates/ca.crt.tpl"
-  destination = "/opt/nomad/agent-certs/ca.crt"
+  destination = "/opt/nomad/certs/ca.crt"
   command     = "systemctl reload nomad"
 }
 
-# The following template stanzas are for the CLI certs
-
+# CONSUL Certs
 template {
-  source      = "/opt/nomad/templates/cli.crt.tpl"
-  destination = "/opt/nomad/cli-certs/cli.crt"
+  source      = "/opt/consul/templates/server.crt.tpl"
+  destination = "/opt/consul/certs/server.crt"
+  perms       = 0700
+  command     = "systemctl reload consul"
 }
 
 template {
-  source      = "/opt/nomad/templates/cli.key.tpl"
-  destination = "/opt/nomad/cli-certs/cli.key"
+  source      = "/opt/consul/templates/server.key.tpl"
+  destination = "/opt/consul/certs/server.key"
+  perms       = 0700
+  command     = "systemctl reload consul"
+}
+
+template {
+  source      = "/opt/consul/templates/client.crt.tpl"
+  destination = "/opt/consul/certs/client.crt"
+  perms       = 0700
+  command     = "systemctl reload consul"
+}
+
+template {
+  source      = "/opt/consul/templates/client.key.tpl"
+  destination = "/opt/consul/certs/client.key"
+  perms       = 0700
+  command     = "systemctl reload consul"
+}
+
+template {
+  source      = "/opt/consul/templates/ca.crt.tpl"
+  destination = "/opt/consul/certs/ca.crt"
+  command     = "systemctl reload consul"
+}
+
+# Vault Certs
+template {
+  source      = "/opt/vault/templates/server.crt.tpl"
+  destination = "/opt/vault/certs/server.crt"
+  perms       = 0700
+  command     = "systemctl reload vault"
+}
+
+template {
+  source      = "/opt/vault/templates/server.key.tpl"
+  destination = "/opt/vault/certs/server.key"
+  perms       = 0700
+  command     = "systemctl reload vault"
+}
+
+template {
+  source      = "/opt/vault/templates/client.crt.tpl"
+  destination = "/opt/vault/certs/client.crt"
+  perms       = 0700
+  command     = "systemctl reload vault"
+}
+
+template {
+  source      = "/opt/vault/templates/client.key.tpl"
+  destination = "/opt/vault/certs/client.key"
+  perms       = 0700
+  command     = "systemctl reload vault"
+}
+
+template {
+  source      = "/opt/vault/templates/ca.crt.tpl"
+  destination = "/opt/vault/certs/ca.crt"
+  command     = "systemctl reload vault"
 }
 EOF
 }

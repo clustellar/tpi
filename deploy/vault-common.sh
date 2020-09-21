@@ -1,5 +1,6 @@
 #!/bin/sh
 
+VAULT_PORT=8200
 DOMAIN=local
 DATADIR=/data
 INFILE=/var/lib/vault/init-data
