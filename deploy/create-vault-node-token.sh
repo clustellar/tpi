@@ -10,7 +10,7 @@ NODE="$(echo $SCP | cut -d @ -f2 | cut -d : -f1)"
 shift
 
 _main() {
-        _load_vault_token $INFILE
+  _load_vault_token $INFILE
 	vault write $INT_PKI/roles/$NODE-role allowed_domains="$NODE.$DOMAIN" allow_subdomains=true max_ttl="$INT_TTL"
 
 	cat <<EOF > $DATADIR/$NODE-policy.hcl
@@ -24,7 +24,7 @@ path "auth/token/create" {
 EOF
 
 	vault policy write $NODE-policy $DATADIR/$NODE-policy.hcl
-        vault policy list
+  vault policy list
 	vault token create -format=yaml -policy="$INT_PKI/roles/$NODE-role" -policy="$NODE-policy" > $DATADIR/$NODE-token.yaml
 	cat $DATADIR/$NODE-token.yaml
 }

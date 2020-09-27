@@ -10,6 +10,8 @@ _main() {
 
 	_setup_root_pki $ROOT_PKI $ROOT_CN $ROOT_TTL
 	_setup_pki $INT_PKI $INT_CN $ROOT_PKI $INT_TTL
+	_sign_pki $INT_PKI $ROOT_PKI $INT_TTL
+	_set_signed_pki $INT_PKI
 	_setup_pki_roles $INT_PKI $INT_ROLE $INT_DOMAINS $INT_TTL
 
 	for cert in $(echo $CERTS | tr "," "\n"); do

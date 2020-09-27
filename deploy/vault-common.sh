@@ -1,18 +1,20 @@
 #!/bin/sh
-
-VAULT_PORT=8200
 DOMAIN=local
 DATADIR=/data
 INFILE=/var/lib/vault/init-data
 ROOT_PKI=root
 ROOT_CN=root.vault
 ROOT_TTL=87600h
-INT_PKI=pki
+INT_PKI=local-pki
 INT_CN=vault.$DOMAIN
 INT_TTL=43800h
 INT_DOMAINS="*.local"
 INT_ROLE=local-issuer
 CERT_TTL=21900h
+
+if `which hostenv`; then
+	source `which hostenv`
+fi
 
 _log() {
 	echo "[INFO] ${@}"
@@ -112,9 +114,24 @@ _setup_pki() {
 
 	vault write -format=yaml $pki/intermediate/generate/internal common_name="$cn Intermediate Authority" > $DATADIR/$csryaml
 	cat $DATADIR/$csryaml | sed -n '/-----BEGIN/,/-----END/p' | awk '{$1=$1;print}' > $DATADIR/$csrpem
+}
+
+_sign_pki() {
+	local pki="$1"
+	local rootpki="$2"
+	local maxttl="$3"
+	local csrpem="$pki-csr.pem"
+	local signedyaml="$pki-signed.yaml" 
+  local signedpem="$pki-signed.pem"
 
 	vault write -format=yaml $rootpki/root/sign-intermediate csr=@$DATADIR/$csrpem format=pem_bundle ttl="$maxttl" > $DATADIR/$signedyaml
 	cat $DATADIR/$signedyaml | sed -n '/-----BEGIN/,/-----END/p' | awk '{$1=$1;print}' > $DATADIR/$signedpem
+}
+
+
+_set_signed_pki() {
+	local pki="$1"
+	local signedpem="$pki-signed.pem"
 
 	vault write $pki/intermediate/set-signed certificate=@$DATADIR/$signedpem
 }

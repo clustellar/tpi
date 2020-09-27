@@ -112,35 +112,26 @@
 			"destination": "/usr/local/bin/deploy-nomad.sh"
 		},
 		{
+			"type": "file",
+			"source": "./deploy/vault-common.sh",
+			"destination": "/usr/local/bin/vault-common.sh"
+		},
+		{
+			"type": "file",
+			"source": "./deploy/deploy-vault-local.sh",
+			"destination": "/usr/local/bin/deploy-vault-local.sh"
+		},
+		{
+			"type": "file",
+			"source": "./deploy/deploy-node.sh",
+			"destination": "/usr/local/bin/deploy-node.sh"
+		},
+		{
 			"type": "shell",
 			"inline": [
 				"chmod 755 /usr/local/bin/*"
 			]
-		},
-		{
-			"type": "shell",
-			"inline": [
-				"mkdir -p /opt/nomad/templates",
-				"mkdir -p /opt/vault/templates",
-				"mkdir -p /opt/consul/templates",
-				"mkdir -p /opt/nomad/certs",
-				"mkdir -p /opt/vault/certs",
-				"mkdir -p /opt/consul/certs",
-				"sudo chown -R ubuntu:ubuntu /opt/nomad",
-				"sudo chown -R ubuntu:ubuntu /opt/vault",
-				"sudo chown -R ubuntu:ubuntu /opt/consul"
-			]
-		},
-		{
-			"type": "file",
-			"source": "./opt/nomad/templates/",
-			"destination": "/opt/nomad/templates/"
-		},
-		{
-			"type": "file",
-			"source": "./opt/nomad/templates/",
-			"destination": "/opt/nomad/templates/"
 		}
-
 	]
 }
+

@@ -1,6 +1,7 @@
 #!/bin/bash
 # https://learn.hashicorp.com/tutorials/consul/deployment-guide
 # /usr/local/bin/consul is built into the image using packer
+source `which hostenv`
 
 consul_user="consul"
 consul_bin="/usr/local/bin/consul-template"
@@ -34,8 +35,20 @@ _main() {
 	sudo chown --recursive $consul_user:$consul_user $consul_data_dir
 	sudo chmod 640 $consul_config_file
 
+	sudo mkdir -p /opt/nomad/templates
+	sudo mkdir -p /opt/consul/templates
+	sudo mkdir -p /opt/vault/templates
+	sudo chown -R nomad:nomad /opt/nomad	
+	sudo chown -R consul:consul /opt/consul
+	sudo chown -R vault:vault /opt/vault
+
 	_generate_consul_config_file | sudo tee $consul_config_file
 	_generate_consul_service_file | sudo tee $consul_service_file
+	_generate_templates_for_component nomad
+	_generate_templates_for_component consul
+	_generate_templates_for_component vault
+
+	sudo chmod 644 /opt/*/templates/*
 
 	echo "starting consul"
 	consul validate $consul_config_file
@@ -44,121 +57,61 @@ _main() {
 	sudo systemctl status consul-template
 }
 
+_generate_template_stanza_for_file() {
+	local comp="$1"
+	local file="$2"
+	cat <<EOF
+template {
+  source      = "/opt/$comp/templates/$file.tpl"
+  destination = "/opt/$comp/certs/$file"
+  perms       = 0700
+  command     = "systemctl reload $comp"
+}
+EOF
+}
+
+# comp=nomad|consul|vault, file=server|client, field=certificate|private_key
+_generate_template_file() {
+	local comp="$1"
+	local file="$2"
+	local field="$3"
+	cat <<EOF
+{{ with secret "$INT_PKI/issue/$INT_ROLE" "common_name=$comp-$file.$DOMAIN" "ttl=24h" "alt_names=localhost" "ip_sans=127.0.0.1" }}
+{{ .Data.$field }}
+{{ end }}
+EOF
+}
+
+_generate_template_stanza_for_component() {
+	local comp="$1"
+	echo "# $comp certs"
+	_generate_template_stanza_for_file $comp ca.crt
+	_generate_template_stanza_for_file $comp server.crt
+	_generate_template_stanza_for_file $comp server.key
+	_generate_template_stanza_for_file $comp client.crt
+	_generate_template_stanza_for_file $comp client.key
+}
+
+_generate_templates_for_component() {
+	local comp="$1"
+	_generate_template_file $comp server certificate | sudo tee /opt/$comp/templates/server.crt.tpl
+	_generate_template_file $comp server private_key | sudo tee /opt/$comp/templates/server.key.tpl
+	_generate_template_file $comp server issuing_ca | sudo tee /opt/$comp/templates/ca.crt.tpl
+}
+
 _generate_consul_config_file() {
 	cat <<EOF
 vault {
-  address      = "$VAULT_SCHEME://$VAULD_ADDR:$VAULT_PORT"
-  token        = "$VAULT_TOKEN"
-  grace        = "1s"
+  address      = "http://127.0.0.1:8200"
+	vault_agent_token_file = "/var/lib/vault/token"
   unwrap_token = false
   renew_token  = true
 }
-
-# NOMAD Certs
-template {
-  source      = "/opt/nomad/templates/server.crt.tpl"
-  destination = "/opt/nomad/certs/server.crt"
-  perms       = 0700
-  command     = "systemctl reload nomad"
-}
-
-template {
-  source      = "/opt/nomad/templates/server.key.tpl"
-  destination = "/opt/nomad/certs/server.key"
-  perms       = 0700
-  command     = "systemctl reload nomad"
-}
-
-template {
-  source      = "/opt/nomad/templates/client.crt.tpl"
-  destination = "/opt/nomad/certs/client.crt"
-  perms       = 0700
-  command     = "systemctl reload nomad"
-}
-
-template {
-  source      = "/opt/nomad/templates/client.key.tpl"
-  destination = "/opt/nomad/certs/client.key"
-  perms       = 0700
-  command     = "systemctl reload nomad"
-}
-
-template {
-  source      = "/opt/nomad/templates/ca.crt.tpl"
-  destination = "/opt/nomad/certs/ca.crt"
-  command     = "systemctl reload nomad"
-}
-
-# CONSUL Certs
-template {
-  source      = "/opt/consul/templates/server.crt.tpl"
-  destination = "/opt/consul/certs/server.crt"
-  perms       = 0700
-  command     = "systemctl reload consul"
-}
-
-template {
-  source      = "/opt/consul/templates/server.key.tpl"
-  destination = "/opt/consul/certs/server.key"
-  perms       = 0700
-  command     = "systemctl reload consul"
-}
-
-template {
-  source      = "/opt/consul/templates/client.crt.tpl"
-  destination = "/opt/consul/certs/client.crt"
-  perms       = 0700
-  command     = "systemctl reload consul"
-}
-
-template {
-  source      = "/opt/consul/templates/client.key.tpl"
-  destination = "/opt/consul/certs/client.key"
-  perms       = 0700
-  command     = "systemctl reload consul"
-}
-
-template {
-  source      = "/opt/consul/templates/ca.crt.tpl"
-  destination = "/opt/consul/certs/ca.crt"
-  command     = "systemctl reload consul"
-}
-
-# Vault Certs
-template {
-  source      = "/opt/vault/templates/server.crt.tpl"
-  destination = "/opt/vault/certs/server.crt"
-  perms       = 0700
-  command     = "systemctl reload vault"
-}
-
-template {
-  source      = "/opt/vault/templates/server.key.tpl"
-  destination = "/opt/vault/certs/server.key"
-  perms       = 0700
-  command     = "systemctl reload vault"
-}
-
-template {
-  source      = "/opt/vault/templates/client.crt.tpl"
-  destination = "/opt/vault/certs/client.crt"
-  perms       = 0700
-  command     = "systemctl reload vault"
-}
-
-template {
-  source      = "/opt/vault/templates/client.key.tpl"
-  destination = "/opt/vault/certs/client.key"
-  perms       = 0700
-  command     = "systemctl reload vault"
-}
-
-template {
-  source      = "/opt/vault/templates/ca.crt.tpl"
-  destination = "/opt/vault/certs/ca.crt"
-  command     = "systemctl reload vault"
-}
 EOF
+
+	_generate_template_stanza_for_component nomad
+	_generate_template_stanza_for_component consul
+	_generate_template_stanza_for_component vault
 }
 
 _generate_consul_service_file() {
