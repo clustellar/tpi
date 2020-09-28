@@ -1,7 +1,8 @@
 #!/bin/bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-DEFAULTENV=/etc/node/vars.env
-NODEENV=/etc/node/node.env
+DEFAULTENV=$DIR/vars.env
+NODEENV=$DIR/node.env
 
 if [ -f "$DEFAULTENV" ]; then source $DEFAULTENV; fi
 if [ -f "$NODEENV" ]; then source $NODEENV; fi
@@ -19,10 +20,15 @@ while [[ $# -gt 0 ]]; do
 		shift
 		evar="$(echo ${key:2} | tr '[:lower:]' '[:upper:]' | tr - _)" # delete --, uppercase, replace - with _
 
-		if [ -z "${!evar}" ]; then
-			echo "${evar}=$val"
-			export ${evar}=$val
+#		if [ -n "${!evar}" ]; then echo "${evar} is set in env"; fi
+
+		if grep -q -E "^${evar}=" $NODEENV ; then
+			sed -i "s/${evar}=/${evar}=$val/" $NODEENV
+		else
+			echo "${evar}=$val" >> $NODEENV
 		fi
+
+		export ${evar}=$val
 	fi
 done
 exit 0
