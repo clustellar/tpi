@@ -9,22 +9,24 @@ CLIENT_ONLY=""
 IP_ADDRESS="${IP_ADDRESS}"
 IP_GATEWAY="${IP_GATEWAY}"
 IP_DNS="${IP_DNS}"
+NETMASK=24
 DATACENTER="${DATACENTER}"
 REGION="${REGION}"
 HOSTNAME=""
 VAULT_ROOT_ADDR=""
 VAULT_ROOT_PKI=pki
 VAULT_ROOT_TOKEN_FILE=""
+VAULT_DATA_DIR=/var/lib/vault
 DOMAIN=local
 DATADIR=/data
-INFILE=/var/lib/vault/init-data
+INFILE=$DATADIR/init-data
 ROOT_PKI=root
 ROOT_CN=root.vault
 ROOT_TTL=87600h
 INT_PKI=local-pki
 INT_CN=vault.$DOMAIN
 INT_TTL=43800h
-INT_DOMAINS="*.local"
+INT_DOMAINS="*.$DOMAIN"
 INT_ROLE=local-issuer
 CERT_TTL=21900h
 
@@ -61,6 +63,7 @@ _generate_hostenv_file() {
 	echo "CLIENT_ONLY=$CLIENT_ONLY"
 	echo "JOIN=$JOIN"
 	echo "DOMAIN=$DOMAIN"
+	echo "VAULT_DATA_DIR=$VAULT_DATA_DIR"
 	echo "VAULT_ROOT_ADDR=$VAULT_ROOT_ADDR"
 	echo "VAULT_ROOT_PKI=$VAULT_ROOT_PKI"
 	echo "VAULT_ROOT_TOKEN_FILE=$VAULT_ROOT_TOKEN_FILE"
@@ -73,7 +76,7 @@ network:
         eth0:
             dhcp4: false
             addresses:
-              - $IP_ADDRESS
+              - $IP_ADDRESS/$NETMASK
             gateway4: $IP_GATEWAY
             nameservers:
               addresses: [$IP_DNS]
@@ -139,6 +142,11 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--datacenter)
 			DATACENTER=$2
+			shift
+			shift
+			;;
+		--data-dir)
+			DATADIR=$2
 			shift
 			shift
 			;;

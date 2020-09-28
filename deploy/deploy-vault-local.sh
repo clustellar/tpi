@@ -10,7 +10,7 @@ vault_service_dir="/etc/systemd/system"
 vault_config_dir="/etc/vault.d"
 vault_service_file="$vault_service_dir/vault.service"
 vault_config_file="$vault_config_dir/vault.hcl"
-vault_data_dir="/var/lib/vault"
+vault_data_dir="$VAULT_DATA_DIR"
 vault_ui="false"
 #cert_dir="/opt/vault/certs"
 

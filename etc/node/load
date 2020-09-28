@@ -1,0 +1,28 @@
+#!/bin/bash
+
+DEFAULTENV=/etc/node/vars.env
+NODEENV=/etc/node/node.env
+
+if [ -f "$DEFAULTENV" ]; then source $DEFAULTENV; fi
+if [ -f "$NODEENV" ]; then source $NODEENV; fi
+
+while [[ $# -gt 0 ]]; do
+	key="$1"
+	shift
+	found=""
+
+	# if key starts with -- indicating a set field
+	[[ "$key" == --* ]] && found="1"
+
+	if [ -n "$found" ]; then
+		val="$1"
+		shift
+		evar="$(echo ${key:2} | tr '[:lower:]' '[:upper:]' | tr - _)" # delete --, uppercase, replace - with _
+
+		if [ -z "${!evar}" ]; then
+			echo "${evar}=$val"
+			export ${evar}=$val
+		fi
+	fi
+done
+exit 0
