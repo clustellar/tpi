@@ -1,7 +1,7 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-DEFAULTENV=$DIR/vars.env
+DEFAULTENV=$DIR/default.env
 NODEENV=$DIR/node.env
 
 if [ -f "$DEFAULTENV" ]; then source $DEFAULTENV; fi
@@ -23,7 +23,7 @@ while [[ $# -gt 0 ]]; do
 #		if [ -n "${!evar}" ]; then echo "${evar} is set in env"; fi
 
 		if grep -q -E "^${evar}=" $NODEENV ; then
-			sed -i "s/${evar}=/${evar}=$val/" $NODEENV
+			sed -i "s/${evar}=.*$/${evar}=$val/" $NODEENV
 		else
 			echo "${evar}=$val" >> $NODEENV
 		fi
@@ -31,4 +31,10 @@ while [[ $# -gt 0 ]]; do
 		export ${evar}=$val
 	fi
 done
+
+for err in $(grep -E '=$' $NODEENV) ; do
+	echo "[ERROR] ${err}null (env variable is not set)"
+	exit 1
+done
+
 exit 0
