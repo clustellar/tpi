@@ -7,28 +7,50 @@ NODEENV=$DIR/node.env
 if [ -f "$DEFAULTENV" ]; then source $DEFAULTENV; fi
 if [ -f "$NODEENV" ]; then source $NODEENV; fi
 
+_write() {
+	local key="$1"
+	local val="$2"
+
+	if grep -q -E "^${key}=" $NODEENV ; then
+		sed -i "s/${key}=.*$/${key}=${val}/" $NODEENV
+	else
+		echo "${key}=${val}" >> $NODEENV
+	fi
+}
+
 while [[ $# -gt 0 ]]; do
 	key="$1"
 	shift
 	found=""
+	isarray=""
 
 	# if key starts with -- indicating a set field
 	[[ "$key" == --* ]] && found="1"
+	[[ "$key" == *[] ]] && isarray="1"
 
 	if [ -n "$found" ]; then
 		val="$1"
 		shift
-		evar="$(echo ${key:2} | tr '[:lower:]' '[:upper:]' | tr - _)" # delete --, uppercase, replace - with _
+		envname="$(echo ${key:2} | tr '[:lower:]' '[:upper:]' | tr - _ | tr -d '[]')" # delete --, uppercase, replace - with _
 
-#		if [ -n "${!evar}" ]; then echo "${evar} is set in env"; fi
-
-		if grep -q -E "^${evar}=" $NODEENV ; then
-			sed -i "s/${evar}=.*$/${evar}=$val/" $NODEENV
-		else
-			echo "${evar}=$val" >> $NODEENV
+		if $(declare -p ${envname} 2> /dev/null | grep -q '^declare \-a'); then
+			isarray="1"
 		fi
 
-		export ${evar}=$val
+		if [ -n "$isarray" ]; then
+			arr="${envname}[@]" # indirect reference to array must add [@] to variable
+			out=""
+			for item in "${!arr}"; do
+				out+=" $item"
+			done
+			val="($out $val )"
+
+			eval "${envname}=${val}"
+		else
+			export ${envname}="$val"
+		fi
+
+		_write "${envname}" "$val"
 	fi
 done
 
