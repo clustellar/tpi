@@ -1,8 +1,18 @@
 #!/bin/bash
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+if [ -d "/etc/node" ]; then
+	DIR="/etc/node"
+else
+	DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+fi
 
 DEFAULTENV=$DIR/default.env
 NODEENV=$DIR/node.env
+
+if [ ! -f "$DEFAULTENV" ]; then
+	echo "[ERROR] Could not find default.env, exiting"
+	exit 1
+fi
 
 if [ -f "$DEFAULTENV" ]; then source $DEFAULTENV; fi
 if [ -f "$NODEENV" ]; then source $NODEENV; fi
@@ -59,4 +69,5 @@ for err in $(grep -E '=$' $NODEENV) ; do
 	exit 1
 done
 
+export NODEENV=$NODEENV
 exit 0

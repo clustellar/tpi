@@ -57,8 +57,10 @@
 				"sudo useradd -s /bin/bash -d /home/ubuntu -m -G docker ubuntu",
 				"sudo mkdir -p /home/ubuntu/.ssh",
 				"sudo mkdir -p /home/ubuntu/.vault",
+				"sudo mkdir -p /etc/node",
 				"sudo touch /home/ubuntu/.ssh/authorized_keys",
-				"sudo chown -R ubuntu:ubuntu /home/ubuntu/.ssh"
+				"sudo chown -R ubuntu:ubuntu /home/ubuntu/.ssh",
+				"sudo chown -R ubuntu:ubuntu /etc/node"
 			]
 		},
 		{
@@ -125,6 +127,21 @@
 			"type": "file",
 			"source": "./deploy/deploy-node.sh",
 			"destination": "/usr/local/bin/deploy-node.sh"
+		},
+		{
+			"type": "file",
+			"source": "./etc/node/load",
+			"destination": "/usr/local/bin/load"
+		},
+		{
+			"type": "file",
+			"source": "./etc/node/default.env",
+			"destination": "/etc/node/default.env"
+		},
+		{
+			"type": "file",
+			"source": "./etc/node/node.env",
+			"destination": "/etc/node/node.env"
 		},
 		{
 			"type": "shell",
