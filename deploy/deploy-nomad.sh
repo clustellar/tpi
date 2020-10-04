@@ -1,6 +1,7 @@
 #!/bin/bash
 # https://learn.hashicorp.com/tutorials/nomad/deployment-guide
 # /usr/local/bin/nomad is built into the image using packer
+source $NODEENV
 
 nomad_user="nomad"
 nomad_bin="/usr/local/bin/nomad"
@@ -63,7 +64,7 @@ server {
 tls {
   http = true
 	rpc = true
-	ca_file = "$cert_dir/ca.crt"
+	ca_file = "$cert_dir/server-ca.crt"
 	cert_file = "$cert_dir/server.crt"
 	key_file = "$cert_dir/server.key"
   verify_https_client = true

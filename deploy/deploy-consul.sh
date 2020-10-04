@@ -1,6 +1,7 @@
 #!/bin/bash
 # https://learn.hashicorp.com/tutorials/consul/deployment-guide
 # /usr/local/bin/consul is built into the image using packer
+source $NODEENV
 
 DATACENTER="${DATACENTER}"
 consul_user="consul"
@@ -57,9 +58,9 @@ _main() {
 	sudo systemctl status consul
 
 	echo "setting env vars for consul clients"
-	export CONSUL_CACERT=/etc/consul.d/consul-agent-ca.pem
-	export CONSUL_CLIENT_CERT=/etc/consul.d/<dc-name>-<server/ client>-consul-<cert-number>.pem
-	export CONSUL_CLIENT_KEY=/etc/consul.d/<dc-name>-<server/   client>-consul-<cert-number>-key.pem
+	export CONSUL_CACERT=$cert_dir/client-ca.crt
+	export CONSUL_CLIENT_CERT=$cert_dir/client.crt
+	export CONSUL_CLIENT_KEY=$cert_dir/client.key
 }
 
 _generate_consul_config_file() {
@@ -71,7 +72,7 @@ client_addr = "0.0.0.0"
 datacenter = "$DATACENTER"
 data_dir = "$consul_data_dir"
 encrypt = "$consul_encrypt_key"
-ca_file = "$cert_dir/ca.crt"
+ca_file = "$cert_dir/server-ca.crt"
 cert_file = "$cert_dir/server.crt"
 key_file = "$cert_dir/server.key"
 verify_incoming = true

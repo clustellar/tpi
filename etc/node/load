@@ -9,6 +9,11 @@ fi
 DEFAULTENV=$DIR/default.env
 NODEENV=$DIR/node.env
 
+touch ~/.bash_profile
+if grep -v 'export NODEENV=' ~/.bash_profile ; then
+	echo "export NODEENV=$NODEENV" >> ~/.bash_profile
+fi
+
 if [ ! -f "$DEFAULTENV" ]; then
 	echo "[ERROR] Could not find default.env, exiting"
 	exit 1
@@ -70,4 +75,3 @@ for err in $(grep -E '=$' $NODEENV) ; do
 done
 
 export NODEENV=$NODEENV
-exit 0

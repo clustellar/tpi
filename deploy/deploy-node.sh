@@ -35,7 +35,12 @@ _set_static_ip_address() {
 
 _main() {
 	if [ -n "$IP_ADDRESS" ]; then
-		_set_static_ip_address
+		local ip="$(hostname -I | cut -d' ' -f1)"
+		if [ "$IP_ADDRESS" != "$ip" ]; then
+			echo "Setting static IP_ADDRESS=$IP_ADDRESS, will exit immediately and exit"
+			_set_static_ip_address
+			exit 0
+		fi
 	fi
 
 	if [ -n "$HOSTNAME" ]; then

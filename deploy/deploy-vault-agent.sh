@@ -1,4 +1,5 @@
 #!/bin/bash
+source $NODEENV
 
 vault_addr="https://vault:8200"
 vault_data_dir="/var/lib/vault"

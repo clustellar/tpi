@@ -1,8 +1,8 @@
 #!/bin/bash
 # https://learn.hashicorp.com/tutorials/vault/deployment-guide
 # /usr/local/bin/vault is built into the image using packer
+source $NODEENV
 source `which vault-common.sh`
-source `which hostenv`
 
 vault_user="vault"
 vault_bin="/usr/local/bin/vault"
@@ -13,6 +13,11 @@ vault_config_file="$vault_config_dir/vault.hcl"
 vault_data_dir="$VAULT_DATA_DIR"
 vault_ui="false"
 #cert_dir="/opt/vault/certs"
+
+if [ -z "$VAULT_DATA_DIR" ]; then
+	echo "[ERROR] VAULT_DATA_DIR is not set in env, exiting."
+	exit 1
+fi
 
 if [ ! -z "$VAULT_DISABLE" ]; then
 	echo "[WARN] vault has been disabled, exiting."
@@ -68,11 +73,7 @@ _generate_vault_local_config_file() {
 	cat <<EOF
 listener "tcp" {
   address       = "127.0.0.1:8200"
-#	tls_cert_file = "$cert_dir/server.crt"
-#	tls_key_file  = "$cert_dir/server.key"
-
-#  tls_require_and_verify_client_cert = "true"
-#	tls_client_ca_file = "$cert_dir/ca.crt"
+  tls_disable   = "true"
 }
 storage "file" {
 	path = "$vault_data_dir"

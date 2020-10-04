@@ -1,7 +1,7 @@
 #!/bin/bash
 # https://learn.hashicorp.com/tutorials/consul/deployment-guide
 # /usr/local/bin/consul is built into the image using packer
-source `which hostenv`
+source $NODEENV
 
 consul_user="consul"
 consul_bin="/usr/local/bin/consul-template"
@@ -38,9 +38,6 @@ _main() {
 	sudo mkdir -p /opt/nomad/templates
 	sudo mkdir -p /opt/consul/templates
 	sudo mkdir -p /opt/vault/templates
-	sudo chown -R nomad:nomad /opt/nomad	
-	sudo chown -R consul:consul /opt/consul
-	sudo chown -R vault:vault /opt/vault
 
 	_generate_consul_config_file | sudo tee $consul_config_file
 	_generate_consul_service_file | sudo tee $consul_service_file
@@ -48,6 +45,9 @@ _main() {
 	_generate_templates_for_component consul
 	_generate_templates_for_component vault
 
+	sudo chown -R nomad:nomad /opt/nomad	
+	sudo chown -R consul:consul /opt/consul
+	sudo chown -R vault:vault /opt/vault
 	sudo chmod 644 /opt/*/templates/*
 
 	echo "starting consul"
@@ -85,18 +85,22 @@ EOF
 _generate_template_stanza_for_component() {
 	local comp="$1"
 	echo "# $comp certs"
-	_generate_template_stanza_for_file $comp ca.crt
+	_generate_template_stanza_for_file $comp server-ca.crt
 	_generate_template_stanza_for_file $comp server.crt
 	_generate_template_stanza_for_file $comp server.key
+	_generate_template_stanza_for_file $comp client-ca.crt
 	_generate_template_stanza_for_file $comp client.crt
 	_generate_template_stanza_for_file $comp client.key
 }
 
 _generate_templates_for_component() {
 	local comp="$1"
-	_generate_template_file $comp server certificate | sudo tee /opt/$comp/templates/server.crt.tpl
-	_generate_template_file $comp server private_key | sudo tee /opt/$comp/templates/server.key.tpl
-	_generate_template_file $comp server issuing_ca | sudo tee /opt/$comp/templates/ca.crt.tpl
+	local roles=(server client)
+	for role in "${roles[@]}"; do
+		_generate_template_file $comp $role certificate | sudo tee /opt/$comp/templates/$role.crt.tpl
+		_generate_template_file $comp $role private_key | sudo tee /opt/$comp/templates/$role.key.tpl
+		_generate_template_file $comp $role issuing_ca | sudo tee /opt/$comp/templates/$role-ca.crt.tpl
+	done
 }
 
 _generate_consul_config_file() {

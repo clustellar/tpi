@@ -1,6 +1,7 @@
 #!/bin/bash
 # https://learn.hashicorp.com/tutorials/vault/deployment-guide
 # /usr/local/bin/vault is built into the image using packer
+source `which $NODEENV`
 
 vault_user="vault"
 vault_bin="/usr/local/bin/vault"
@@ -83,7 +84,7 @@ listener "tcp" {
 	tls_key_file  = "$cert_dir/server.key"
 
   tls_require_and_verify_client_cert = "true"
-	tls_client_ca_file = "$cert_dir/ca.crt"
+	tls_client_ca_file = "$cert_dir/server-ca.crt"
 }
 storage "file" {
 	path = "$vault_data_dir"
