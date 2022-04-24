@@ -1,0 +1,15 @@
+auth_service:
+    message_of_the_day: "Welcome to the cluster. All activity will be logged."
+
+ssh_service:
+  # Enabled SSH Service
+  enabled: true
+  # Enable PAM integration
+  pam:
+    # "no" by default
+    enabled: true
+    # use /etc/pam.d/sshd configuration (the default)
+    service_name: "teleport"
+    # use the "auth" modules in the PAM config
+    # "false" by default
+    use_pam_auth: true

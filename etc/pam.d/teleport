@@ -1,0 +1,3 @@
+account   required   pam_exec.so /etc/pam-exec.d/teleport_acct
+session   required   pam_motd.so
+session   required   pam_permit.so
