@@ -11,25 +11,25 @@
 			"file_checksum_type": "sha256",
 			"file_target_extension": "xz",
 			"file_unarchive_cmd": ["xz", "-d", "$ARCHIVE_PATH"],
-			"image_build_method": "reuse",
+			"image_build_method": "resize",
 			"image_path": "ubuntu-20.04.img",
-			"image_size": "3.1G",
+			"image_size": "6G",
 			"image_type": "dos",
 			"image_partitions": [
 				{
 					"name": "boot",
 					"type": "c",
-					"start_sector": "2048",
-					"filesystem": "fat",
+					"start_sector": "8192",
+					"filesystem": "vfat",
 					"size": "256M",
-					"mountpoint": "/boot/firmware"
+					"mountpoint": "/boot"
 				},
 				{
 					"name": "root",
 					"type": "83",
-					"start_sector": "526336",
+					"start_sector": "532480",
 					"filesystem": "ext4",
-					"size": "2.8G",
+					"size": "0",
 					"mountpoint": "/"
 				}
     	],
@@ -55,11 +55,9 @@
 			"type": "shell",
 			"inline": [
 				"sudo useradd -s /bin/bash -d /home/ubuntu -m -G docker ubuntu",
-				"sudo mkdir -p /home/ubuntu/.ssh",
-				"sudo mkdir -p /home/ubuntu/.vault",
-				"sudo mkdir -p /etc/node",
-				"sudo touch /home/ubuntu/.ssh/authorized_keys",
-				"sudo touch /home/ubuntu/.bash_profile"
+        "sudo chage -I -1 -m 0 -M 99999 -l ubuntu",
+        "sudo -H -u ubuntu bash -c 'mkdir -p ~/.ssh ~/.vault'",
+        "sudo -H -u ubuntu bash -c 'touch ~/.ssh/authorized_keys ~/.bash_profile'"
 			]
 		},
 		{
@@ -69,7 +67,12 @@
 		},
 		{
 			"type": "file",
-			"source": "./bin/nomad",
+			"source": "./bin/k3s",
+			"destination": "/usr/local/bin/"
+		},
+		{
+			"type": "file",
+			"source": "./bin/vault",
 			"destination": "/usr/local/bin/"
 		},
 		{
@@ -84,71 +87,39 @@
 		},
 		{
 			"type": "file",
-			"source": "./bin/vault",
+			"source": "./bin/nomad",
 			"destination": "/usr/local/bin/"
-		},
-		{
-			"type": "file",
-			"source": "./deploy/deploy-vault-agent.sh",
-			"destination": "/usr/local/bin/deploy-vault-agent.sh"
-		},
-		{
-			"type": "file",
-			"source": "./deploy/deploy-vault.sh",
-			"destination": "/usr/local/bin/deploy-vault.sh"
-		},
-		{
-			"type": "file",
-			"source": "./deploy/deploy-consul.sh",
-			"destination": "/usr/local/bin/deploy-consul.sh"
-		},
-		{
-			"type": "file",
-			"source": "./deploy/deploy-consul-template.sh",
-			"destination": "/usr/local/bin/deploy-consul-template.sh"
-		},
-		{
-			"type": "file",
-			"source": "./deploy/deploy-nomad.sh",
-			"destination": "/usr/local/bin/deploy-nomad.sh"
-		},
-		{
-			"type": "file",
-			"source": "./deploy/vault-common.sh",
-			"destination": "/usr/local/bin/vault-common.sh"
-		},
-		{
-			"type": "file",
-			"source": "./deploy/deploy-vault-local.sh",
-			"destination": "/usr/local/bin/deploy-vault-local.sh"
-		},
-		{
-			"type": "file",
-			"source": "./deploy/deploy-node.sh",
-			"destination": "/usr/local/bin/deploy-node.sh"
-		},
-		{
-			"type": "file",
-			"source": "./etc/node/load",
-			"destination": "/usr/local/bin/load"
-		},
-		{
-			"type": "file",
-			"source": "./etc/node/default.env",
-			"destination": "/etc/node/default.env"
-		},
-		{
-			"type": "file",
-			"source": "./etc/node/node.env",
-			"destination": "/etc/node/node.env"
 		},
 		{
 			"type": "shell",
 			"inline": [
-				"chmod 755 /usr/local/bin/*",
-				"echo 'export NODEENV=/etc/node/node.env' | sudo tee -a /home/ubuntu/.bash_profile",
-				"sudo chown -R ubuntu:ubuntu /home/ubuntu",
-				"sudo chown -R ubuntu:ubuntu /etc/node"
+				"sudo mkdir -p /var/lib/teleport"
+			]
+		},
+		{
+			"type": "file",
+			"source": "./bin/teleport",
+			"destination": "/usr/local/bin/"
+		},
+		{
+			"type": "file",
+			"source": "./bin/tctl",
+			"destination": "/usr/local/bin/"
+		},
+		{
+			"type": "file",
+			"source": "./bin/tbot",
+			"destination": "/usr/local/bin/"
+		},
+		{
+			"type": "file",
+			"source": "./bin/tsh",
+			"destination": "/usr/local/bin/"
+		},
+		{
+			"type": "shell",
+			"inline": [
+        "sudo chmod +x /usr/local/bin/*"
 			]
 		}
 	]
