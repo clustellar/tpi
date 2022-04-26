@@ -55,73 +55,44 @@
 			"type": "shell",
 			"inline": [
 				"sudo useradd -s /bin/bash -d /home/ubuntu -m -G docker ubuntu",
-        "sudo chage -I -1 -m 0 -M 99999 -l ubuntu",
-        "sudo -H -u ubuntu bash -c 'mkdir -p ~/.ssh ~/.vault'",
-        "sudo -H -u ubuntu bash -c 'touch ~/.ssh/authorized_keys ~/.bash_profile'"
+        "sudo chage -I -1 -m 0 -M 99999 ubuntu"
 			]
 		},
 		{
 			"type": "file",
-			"source": "./id_rsa.pub",
-			"destination": "/home/ubuntu/.ssh/authorized_keys"
+			"source": "./ssh/",
+			"destination": "/home/ubuntu/.ssh/"
 		},
-		{
-			"type": "file",
-			"source": "./bin/k3s",
-			"destination": "/usr/local/bin/"
-		},
-		{
-			"type": "file",
-			"source": "./bin/vault",
-			"destination": "/usr/local/bin/"
-		},
-		{
-			"type": "file",
-			"source": "./bin/consul",
-			"destination": "/usr/local/bin/"
-		},
-		{
-			"type": "file",
-			"source": "./bin/consul-template",
-			"destination": "/usr/local/bin/"
-		},
-		{
-			"type": "file",
-			"source": "./bin/nomad",
-			"destination": "/usr/local/bin/"
-		},
+    {
+      "type": "file",
+      "source": "./bin/",
+      "destination": "/usr/local/bin/"
+    },
+    {
+      "type": "file",
+      "source": "./var/",
+      "destination": "/var/"
+    },
+    {
+      "type": "file",
+      "source": "./etc/",
+      "destination": "/etc/"
+    },
+    {
+      "type": "file",
+      "source": "./opt/",
+      "destination": "/opt/"
+    },
 		{
 			"type": "shell",
 			"inline": [
-				"sudo mkdir -p /var/lib/teleport"
+        "sudo chmod 755 /home/ubuntu/.ssh",
+        "sudo chown -R ubuntu. /home/ubuntu/.ssh",
+        "sudo systemctl enable teleport",
+        "sudo systemctl enable vault-local",
+        "sudo systemctl enable k3s"
 			]
-		},
-		{
-			"type": "file",
-			"source": "./bin/teleport",
-			"destination": "/usr/local/bin/"
-		},
-		{
-			"type": "file",
-			"source": "./bin/tctl",
-			"destination": "/usr/local/bin/"
-		},
-		{
-			"type": "file",
-			"source": "./bin/tbot",
-			"destination": "/usr/local/bin/"
-		},
-		{
-			"type": "file",
-			"source": "./bin/tsh",
-			"destination": "/usr/local/bin/"
-		},
-		{
-			"type": "shell",
-			"inline": [
-        "sudo chmod +x /usr/local/bin/*"
-			]
-		}
+    }
 	]
 }
 
