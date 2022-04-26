@@ -89,8 +89,7 @@
         "sudo chmod 755 /home/ubuntu/.ssh",
         "sudo chown -R ubuntu. /home/ubuntu/.ssh",
         "sudo systemctl enable teleport",
-        "sudo systemctl enable vault-local",
-        "sudo systemctl enable k3s"
+        "sudo systemctl enable vault-local"
 			]
     }
 	]
